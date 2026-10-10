@@ -87,10 +87,15 @@ class MainActivity : ComponentActivity() {
 
     private val wakeWordPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { results ->
-        val microphoneGranted = results[Manifest.permission.RECORD_AUDIO] == true
+    ) { _ ->
+        // Check current permission state, including permissions granted before this request.
+        val microphoneGranted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
         val notificationsGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-            results[Manifest.permission.POST_NOTIFICATIONS] == true
+            ContextCompat.checkSelfPermission(
+                this, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
 
         if (microphoneGranted && notificationsGranted) {
             startWakeWordService()

@@ -112,6 +112,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Offline Vosk wake-word foreground service -->
+        <service
+            android:name=".WakeWordService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
         <!-- =============================================================== -->
         <!-- GUARDIAN FOREGROUND SERVICE                                     -->
         <!-- Declares connectedDevice, location, and microphone types (API 34) -->

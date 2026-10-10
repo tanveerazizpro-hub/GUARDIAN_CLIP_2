@@ -85,6 +85,13 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var sharedPreferences: SharedPreferences
 
+    private val wakeWordPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) startWakeWordService()
+        else Toast.makeText(this, "Microphone permission is required for offline wake-word detection.", Toast.LENGTH_LONG).show()
+    }
+
     companion object {
         private const val PREFS_NAME = "guardian_prefs"
         private const val KEY_EMERGENCY_NUMBER = "emergency_contact_number"
@@ -93,6 +100,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Request microphone access while the activity is visible, then start offline detection.
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            startWakeWordService()
+        } else {
+            wakeWordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        }
 
         // Keep screen on continuously for the hardware demo on tablet
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -121,6 +135,14 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    private fun startWakeWordService() {
+        val intent = Intent(this, WakeWordService::class.java)
+        runCatching { ContextCompat.startForegroundService(this, intent) }
+            .onFailure {
+                Toast.makeText(this, "Wake-word detection could not start: ${it.message}", Toast.LENGTH_LONG).show()
+            }
     }
 
     private fun startGuardianService() {

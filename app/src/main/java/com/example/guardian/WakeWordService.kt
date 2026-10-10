@@ -47,18 +47,23 @@ class WakeWordService : Service(), RecognitionListener {
         serviceScope.launch {
             try {
                 val modelDirectory = File(filesDir, MODEL_DIRECTORY)
+                updateNotification("Copying AI model...")
                 if (!File(modelDirectory, "am").exists()) {
                     copyAssetDirectory(MODEL_DIRECTORY, modelDirectory)
                 }
+                updateNotification("Loading AI model...")
                 val loadedModel = Model(modelDirectory.absolutePath)
                 model = loadedModel
                 val recognizer = Recognizer(loadedModel, SAMPLE_RATE, GRAMMAR)
+                updateNotification("Starting microphone...")
                 speechService = SpeechService(recognizer, SAMPLE_RATE).also {
                     it.startListening(this@WakeWordService)
                 }
+                updateNotification("✅ Listening for 'help'")
                 Log.i(TAG, "Offline wake-word detection started.")
             } catch (error: Exception) {
                 Log.e(TAG, "Unable to initialize Vosk. Ensure the model assets are included.", error)
+                updateNotification("❌ Error: ${error.message}")
                 stopSelf()
             }
         }
@@ -110,6 +115,20 @@ class WakeWordService : Service(), RecognitionListener {
     private fun triggerSOSProtocol() {
         Log.w(TAG, "SOS protocol placeholder invoked.")
         // TODO: Invoke the app's explicitly designed SOS workflow here.
+    }
+
+    private fun updateNotification(message: String) {
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.notify(
+            NOTIFICATION_ID,
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_lock_silent_mode)
+                .setContentTitle("Guardian Status")
+                .setContentText(message)
+                .setOngoing(true)
+                .setSilent(true)
+                .build()
+        )
     }
 
     private fun createNotificationChannel() {

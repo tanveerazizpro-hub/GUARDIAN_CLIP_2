@@ -84,8 +84,10 @@ class WakeWordService : Service(), RecognitionListener {
     override fun onError(exception: Exception?) {
         Log.e(TAG, "Vosk recognition error", exception)
     }
+    
     override fun onTimeout() {
-        if (!isDestroyed) {
+        // FIX: Replaced invalid 'isDestroyed' check with a safe null-check
+        if (speechService != null) {
             speechService?.startListening(this)
         }
     }

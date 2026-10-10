@@ -84,6 +84,10 @@ dependencies {
     // Google Play Location Services
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    // Offline Vosk wake-word recognition
+    implementation("com.alphacephei:vosk-android:0.3.47")
+    implementation("net.java.dev.jna:jna:5.13.0@aar")
+
     // Kotlin Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")

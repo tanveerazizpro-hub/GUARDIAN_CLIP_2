@@ -86,10 +86,21 @@ class MainActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
 
     private val wakeWordPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) startWakeWordService()
-        else Toast.makeText(this, "Microphone permission is required for offline wake-word detection.", Toast.LENGTH_LONG).show()
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        val microphoneGranted = results[Manifest.permission.RECORD_AUDIO] == true
+        val notificationsGranted = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            results[Manifest.permission.POST_NOTIFICATIONS] == true
+
+        if (microphoneGranted && notificationsGranted) {
+            startWakeWordService()
+        } else {
+            Toast.makeText(
+                this,
+                "Microphone and notification permissions are required for offline wake-word detection.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     companion object {
@@ -101,11 +112,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Request microphone access while the activity is visible, then start offline detection.
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+        // Request all wake-word runtime permissions while the activity is visible.
+        val wakeWordPermissions = buildList {
+            add(Manifest.permission.RECORD_AUDIO)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        val missingWakeWordPermissions = wakeWordPermissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missingWakeWordPermissions.isEmpty()) {
             startWakeWordService()
         } else {
-            wakeWordPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            wakeWordPermissionLauncher.launch(missingWakeWordPermissions.toTypedArray())
         }
 
         // Keep screen on continuously for the hardware demo on tablet
